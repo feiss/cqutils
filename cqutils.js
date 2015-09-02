@@ -1,3 +1,6 @@
+//cqutils - A set of additions to Playground/Canvasquery HTML5 libraries by @rezoner
+//Diego F. Goberna - http://feiss.be
+
 
 Timer= function(){
 	this.time= 0;
