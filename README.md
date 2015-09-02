@@ -1,3 +1,6 @@
+#cqutils
+
+A set of additions to Playground/Canvasquery HTML5 libraries by @rezoner
 
 ## Functions
 
