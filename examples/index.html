@@ -2,17 +2,97 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-
+<style>
+body, html{
+	margin: 0;
+	font: 12px arial, helvetica, sans-serif;
+	height: 100%;
+	background-color: #222;
+}
+header{
+	width: 150px;
+	position: fixed;
+	padding: 10px;
+	background-color: #eee;
+	height: 100%;
+	height: calc(100% - 20px);
+}
+ul{
+	list-style: none;
+	padding-left: 0;
+	line-height: 1.7em;
+}
+#content{
+	position: absolute;
+	top: 0px;
+	margin-left: 170px;
+	padding: 5px;
+	height: 500px;
+	width: 80%;
+	width: calc(100% - 190px);
+}
+#code{
+	position: absolute;
+	top: 520px;
+	margin-left: 170px;
+	padding-left: 5px;
+	width: 80%;
+	width: calc(100% - 175px);
+	font-family: monospace;
+	background-color: #333;
+	color: #bbb;
+}
+#code strong{
+	color: #fff;
+	font-weight: normal;
+}
+#code .comment, #code .comment strong{
+	color: #666;
+	font-weight: normal;
+	font-style: italic;
+}
+#code .keyword{
+	color: #bbe;
+}
+h1{
+	font-size: 16px;
+}
+</style>
 <script>
 
+//http://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
+function loadScript(url){
+	document.getElementById('content').innerHTML='';
+
+	var script = document.createElement("script");
+	script.type = "text/javascript";
+	script.src = url;
+	document.getElementsByTagName("head")[0].appendChild(script);
+
+
+	var client = new XMLHttpRequest();
+	client.open('GET', url);
+	client.onreadystatechange = function() {
+	  document.getElementById('code').innerHTML= client.responseText.replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;').replace(/(['"+=!,:${}()|\[\]\\])/g, '<strong>$1</strong>').replace(/(\/\/.*)/g, '<span class="comment">$1</span>').replace(/\n/g,'<br>').replace(/([^a-z])(break|case|catch|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|instanceof|let|new|return|super|switch|this|throw|try|typeof|var|void|while|with|yield)([^a-z])/g, '$1<span class="keyword">$2</span>$3');
+	}
+	client.send();
+}
 
 </script>
 
 </head>
 <body>
-
-
+<header>
+	<h1>CQUtils examples</h1>
+	<ul>
+		<li><a href="#" onclick="loadScript('basic.js')">Basic sprite</a></li>
+		<li><a href="#" onclick="loadScript('time.js')">Time</a></li>
+		<li><a href="#" onclick="loadScript('complete.js')">Complete scene</a></li>
+	</ul>
+</header>
+<div id="content"></div>
+<div id="code"></div>
 <script src="playground.js"></script>
-<script src="cqutils.js"></script>
+<script src="../src/cqutils.js"></script>
 </body>
 </html>

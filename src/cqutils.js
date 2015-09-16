@@ -28,10 +28,12 @@ Timer.prototype={
 		this.paused= false;
 	},
 	on: function(){
-		for(var i=0; i<arguments.length; i++){
-			if (this.time >= arguments[i])
-				if (this.table[arguments[i]]===undefined){
-					this.table[arguments[i]]= true;
+		var args= arguments;
+		if (args.length==1 && typeOf(args[0])=='array') args= args[0];
+		for(var i=0; i<args.length; i++){
+			if (this.time >= args[i])
+				if (this.table[args[i]]===undefined){
+					this.table[args[i]]= true;
 					return 1;
 				}
 		}
@@ -481,3 +483,56 @@ function debug(){
 	txt= txt.join(' ');
 	app.layer.font('10px arial').fillStyle('#fff').wrappedText(txt, 2,10, app.width);
 }
+
+
+
+
+// post production filters
+
+
+cq.Layer.prototype.realNoise= function(intensity){
+	if (intensity<=0) return;
+}
+
+cq.Layer.prototype.noise= function(intensity){
+	if (intensity<=0) return;
+	var im= this.context.getImageData(0,0, this.width, this.height);
+	var imd= im.data;
+	var i, val= intensity*255, val2= val/2;
+	for (i=0; i< imd.length; i+=4){
+		imd[i  ]= saturate(Math.floor(imd[i]+M.random()*val-val2), 0, 255);
+		imd[i+1]= saturate(Math.floor(imd[i+1]+M.random()*val-val2), 0, 255);
+		imd[i+2]= saturate(Math.floor(imd[i+2]+M.random()*val-val2), 0, 255);
+	}
+	this.context.putImageData(im,0,0);
+}
+
+cq.Layer.prototype.tint= function(intensity, r, g, b){
+	if (intensity<=0) return;
+	var im= this.context.getImageData(0,0, this.width, this.height);
+	r= r || 0;
+	g= g || 0;
+	b= b || 0;
+	var imd= im.data, val= intensity, val2= 1-intensity;
+	var i;
+	for (i=0; i< imd.length; i+=4){
+		imd[i  ]= imd[i]*val2 + r*val;
+		imd[i+1]= imd[i+1]*val2 + g*val;
+		imd[i+2]= imd[i+2]*val2 + b*val;
+	}
+	this.context.putImageData(im,0,0);
+}
+
+
+cq.Layer.prototype.scanlines= function(intensity){
+	if (intensity<=0) return;
+	var i;
+	var w= this.width;
+	//debug('#'+val+''+val+''+val);
+	this.a(intensity).strokeStyle('#000').lineWidth(1);
+	for (i=0.5; i< this.height; i+=2){
+		this.strokeLine(0, i, w, i);
+	}
+	this.ra();
+}
+
