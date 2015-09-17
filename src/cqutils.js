@@ -533,18 +533,18 @@ NoiseFilter= function(layer, numlayers){
 	this.layer= layer;
 	this.mode= 'normal';
 	this.filters= [];
-	for (var i=0; i< numlayers||5; i++){
-		var f= cq(this.layer.width, this.layer.height);
+	if (numlayers==undefined || numlayers <1) numlayers=1;
+	for (var i=0; i< 5; i++){
+		var f= cq(layer.width, layer.height);
 		var im= f.context.getImageData(0, 0, f.width, f.height);
 		var imd= im.data;
-		var i;
-		for (i=0; i< imd.length; i+=4){
+		for (var i=0; i< imd.length; i+=4){
 			imd[i  ]= F(M.random()*255);
 			imd[i+1]= F(M.random()*255);
 			imd[i+2]= F(M.random()*255);
-			imd[i+3]= 1;
+			imd[i+3]= 255;
 		}
-		f.context.putImageData(im,0,0);
+		f.context.putImageData(im, 0, 0);
 		this.filters.push(f);
 	}
 	this.filteri=0;
@@ -556,19 +556,6 @@ NoiseFilter.prototype={
 		this.layer.a(t).drawImage(this.filters[this.filteri].canvas, 0, 0).ra();
 		this.filteri= (this.filteri+1)%this.filters.length;
 	}
-}
-
-cq.Layer.prototype.noise= function(intensity){
-	if (intensity<=0) return;
-	var im= this.context.getImageData(0,0, this.width, this.height);
-	var imd= im.data;
-	var i, val= intensity*255, val2= val/2;
-	for (i=0; i< imd.length; i+=4){
-		imd[i  ]= saturate(Math.floor(imd[i]+M.random()*val-val2), 0, 255);
-		imd[i+1]= saturate(Math.floor(imd[i+1]+M.random()*val-val2), 0, 255);
-		imd[i+2]= saturate(Math.floor(imd[i+2]+M.random()*val-val2), 0, 255);
-	}
-	this.context.putImageData(im,0,0);
 }
 
 

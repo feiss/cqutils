@@ -14,7 +14,7 @@ app= playground(
 			new TintFilter(this.layer, '#00f'),
 			new TintFilter(this.layer, '#f00'),
 			new ScanlinesFilter(this.layer, '#000'),
-			new NoiseFilter(this.layer)
+			new NoiseFilter(this.layer, 4)
 		];
 		this.filter= 0;
 		this.t= 0;
