@@ -484,20 +484,18 @@ function debug(){
 	app.layer.font('10px arial').fillStyle('#fff').wrappedText(txt, 2,10, app.width);
 }
 
-
+TIME= window.performance&&window.performance.now?window.performance.now.bind(performance):Date.now;
 
 
 // post production filters
 
 
-TintFilter= function(layer, color){
+function TintFilter(layer, color){
 	this.intensity= 1;
 	this.layer= layer;
 	this.mode= 'normal';
 	this.filter= cq(layer.width, layer.height).clear(cq.color(color));
-}
-TintFilter.prototype={
-	render: function(intensity){
+	this.render= function(intensity){
 		var t= intensity===undefined? this.intensity: intensity;
 		if (t<=0) return;
 		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
@@ -508,33 +506,33 @@ TintFilter.prototype={
 //////////////////////////////////////////
 
 
-RealNoiseFilter= function(layer){
+function RealNoiseFilter(layer){
 	this.intensity= 1;
 	this.layer= layer;
-}
-RealNoiseFilter.prototype={
-	render: function(intensity){
+	this.render= function(intensity){
 		var t= intensity===undefined? this.intensity: intensity;
 		if (t<=0) return;
 		var im= this.layer.context.getImageData(0,0, this.layer.width, this.layer.height);
 		var imd= im.data;
-		var i, val= t*255, val2= val/2;
+		var i, t2= 1-t, t= 255*t;
 		for (i=0; i< imd.length; i+=4){
-			imd[i  ]= saturate(Math.floor(imd[i]+M.random()*val-val2), 0, 255);
-			imd[i+1]= saturate(Math.floor(imd[i+1]+M.random()*val-val2), 0, 255);
-			imd[i+2]= saturate(Math.floor(imd[i+2]+M.random()*val-val2), 0, 255);
+			imd[i  ]= Math.floor(imd[i  ]*t2 + M.random()*t);
+			imd[i+1]= Math.floor(imd[i+1]*t2 + M.random()*t);
+			imd[i+2]= Math.floor(imd[i+2]*t2 + M.random()*t);
 		}
 		this.layer.context.putImageData(im,0,0);
 	}
 }
 
-NoiseFilter= function(layer, numlayers){
+//////////////////////////////////////////
+
+function NoiseFilter(layer, numlayers){
 	this.intensity= 1;
 	this.layer= layer;
 	this.mode= 'normal';
 	this.filters= [];
 	if (numlayers==undefined || numlayers <1) numlayers=1;
-	for (var i=0; i< 5; i++){
+	for (var j=0; j< numlayers; j++){
 		var f= cq(layer.width, layer.height);
 		var im= f.context.getImageData(0, 0, f.width, f.height);
 		var imd= im.data;
@@ -548,29 +546,28 @@ NoiseFilter= function(layer, numlayers){
 		this.filters.push(f);
 	}
 	this.filteri=0;
-}
-NoiseFilter.prototype={
-	render: function(intensity){
+
+	this.render= function(intensity){
 		var t= intensity===undefined? this.intensity: intensity;
 		if (t<=0) return;
-		this.layer.a(t).drawImage(this.filters[this.filteri].canvas, 0, 0).ra();
+		this.layer.a(t).drawImage(this.filters[F(this.filteri)].canvas, 0, 0).ra();
 		this.filteri= (this.filteri+1)%this.filters.length;
 	}
 }
 
 
-ScanlinesFilter= function(layer, color){
+//////////////////////////////////////////
+
+function ScanlinesFilter(layer, color){
 	this.intensity= 1;
 	this.layer= layer;
 	this.mode= 'normal';
-	this.filter= cq(this.layer.width, this.layer.height);
+	this.filter= cq(layer.width, layer.height);
 	this.filter.strokeStyle(cq.color(color||'#000')).lineWidth(1);
 	for (var i=0.5; i< this.filter.height; i+=2){
 		this.filter.strokeLine(0, i, this.filter.width, i);
 	}
-}
-ScanlinesFilter.prototype= {
-	render: function(intensity){
+	this.render= function(intensity){
 		var t= intensity===undefined? this.intensity: intensity;
 		if (t<=0) return;
 		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
@@ -578,3 +575,87 @@ ScanlinesFilter.prototype= {
 	}
 }
 
+//////////////////////////////////////////
+
+function VignetteFilter(layer, radius, color){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	if (radius===undefined) radius= 0.5;
+	if (color===undefined) color= cq.color('#000'); else color= cq.color(color);
+	this.filter= cq(layer.width, layer.height);
+	var w= app.center.x, h= app.center.y;
+	var r= dist(0, 0, w, h);
+	var gradient= this.filter.createRadialGradient(w, h, r, w, h, r*radius);
+	gradient.addColorStop(0, color.toRgba());
+	gradient.addColorStop(1, color.alpha(0).toRgba());
+	this.filter.fillStyle(gradient);
+	this.filter.fillRect(0, 0, layer.width, layer.height);
+
+
+	this.render= function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
+//		this.layer.blend(this.filter, this.mode, t);
+	}
+}
+
+//////////////////////////////////////////
+
+function PixelateFilter(layer, pixelsize){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	if (pixelsize===undefined) pixelsize= 2;
+	this.pixelsize= saturate(F(pixelsize), 1, layer.height);
+	this.filter= cq(layer.width, layer.height);
+
+	this.render= function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		this.filter.drawImage(layer.canvas,0,0).resize(1/this.pixelsize).resize(this.pixelsize);
+		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
+//		this.layer.blend(this.filter, this.mode, t);
+	}
+}
+//////////////////////////////////////////
+
+function FastBlurFilter(layer, radius){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	if (radius===undefined) radius= 2;
+	this.radius= saturate(F(radius), 1, layer.height);
+	this.filter= cq(layer.width, layer.height);
+
+	this.render= function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		cq.smoothing= true;
+		this.filter.drawImage(layer.canvas,0,0).resize(1/this.radius).resize(this.radius);
+		cq.smoothing= false;
+		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
+//		this.layer.blend(this.filter, this.mode, t);
+	}
+}
+//////////////////////////////////////////
+
+function BloomFilter(layer, radius){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	if (radius===undefined) radius= 2;
+	this.radius= saturate(F(radius), 1, layer.height);
+	this.filter= cq(layer.width, layer.height);
+
+	this.render= function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		cq.smoothing= true;
+		this.filter.drawImage(layer.canvas,0,0).resize(1/this.radius).setHsl(false, false, 0.5).setHsl(false, false, 1).resize(this.radius);
+		cq.smoothing= false;
+		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
+//		this.layer.blend(this.filter, this.mode, t);
+	}
+}
