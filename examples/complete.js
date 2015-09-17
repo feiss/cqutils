@@ -3,7 +3,12 @@
 // f1/f2 to decrease/increase time speed
 // r to reset time
 
-
+var stats = new Stats();
+stats.setMode(0);
+stats.domElement.style.position='absolute';
+stats.domElement.style.left='160px';
+document.body.appendChild( stats.domElement );
+			
 app= playground(
 {
 	smoothing: false,
@@ -53,6 +58,8 @@ enter:function(){
 	this.steplist= [this.t, this.dude, this.planet, this.ps];
 },
 render:function(dt){
+	stats.begin();
+	
 	dt*= this.speed;
 	for (var i in this.steplist) this.steplist[i].step(dt);	
 	
@@ -91,7 +98,8 @@ render:function(dt){
 	
 	if (intersection(this.dude.getBoundingBox(), this.planet.getBoundingBox()))
 		debug('hit');
-	
+		
+	stats.end();
 },
 keydown: function(ev){
 	if (ev.key=='f1') this.speed-=.5;

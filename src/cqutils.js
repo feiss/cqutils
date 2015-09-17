@@ -490,8 +490,72 @@ function debug(){
 // post production filters
 
 
-cq.Layer.prototype.realNoise= function(intensity){
-	if (intensity<=0) return;
+TintFilter= function(layer, color){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	this.filter= cq(layer.width, layer.height).clear(cq.color(color));
+}
+TintFilter.prototype={
+	render: function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
+//		this.layer.blend(this.filter, this.mode, t);
+	}
+};
+
+//////////////////////////////////////////
+
+
+RealNoiseFilter= function(layer){
+	this.intensity= 1;
+	this.layer= layer;
+}
+RealNoiseFilter.prototype={
+	render: function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		var im= this.layer.context.getImageData(0,0, this.layer.width, this.layer.height);
+		var imd= im.data;
+		var i, val= t*255, val2= val/2;
+		for (i=0; i< imd.length; i+=4){
+			imd[i  ]= saturate(Math.floor(imd[i]+M.random()*val-val2), 0, 255);
+			imd[i+1]= saturate(Math.floor(imd[i+1]+M.random()*val-val2), 0, 255);
+			imd[i+2]= saturate(Math.floor(imd[i+2]+M.random()*val-val2), 0, 255);
+		}
+		this.layer.context.putImageData(im,0,0);
+	}
+}
+
+NoiseFilter= function(layer, numlayers){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	this.filters= [];
+	for (var i=0; i< numlayers||5; i++){
+		var f= cq(this.layer.width, this.layer.height);
+		var im= f.context.getImageData(0, 0, f.width, f.height);
+		var imd= im.data;
+		var i;
+		for (i=0; i< imd.length; i+=4){
+			imd[i  ]= F(M.random()*255);
+			imd[i+1]= F(M.random()*255);
+			imd[i+2]= F(M.random()*255);
+			imd[i+3]= 1;
+		}
+		f.context.putImageData(im,0,0);
+		this.filters.push(f);
+	}
+	this.filteri=0;
+}
+NoiseFilter.prototype={
+	render: function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		this.layer.a(t).drawImage(this.filters[this.filteri].canvas, 0, 0).ra();
+		this.filteri= (this.filteri+1)%this.filters.length;
+	}
 }
 
 cq.Layer.prototype.noise= function(intensity){
@@ -507,32 +571,23 @@ cq.Layer.prototype.noise= function(intensity){
 	this.context.putImageData(im,0,0);
 }
 
-cq.Layer.prototype.tint= function(intensity, r, g, b){
-	if (intensity<=0) return;
-	var im= this.context.getImageData(0,0, this.width, this.height);
-	r= r || 0;
-	g= g || 0;
-	b= b || 0;
-	var imd= im.data, val= intensity, val2= 1-intensity;
-	var i;
-	for (i=0; i< imd.length; i+=4){
-		imd[i  ]= imd[i]*val2 + r*val;
-		imd[i+1]= imd[i+1]*val2 + g*val;
-		imd[i+2]= imd[i+2]*val2 + b*val;
+
+ScanlinesFilter= function(layer, color){
+	this.intensity= 1;
+	this.layer= layer;
+	this.mode= 'normal';
+	this.filter= cq(this.layer.width, this.layer.height);
+	this.filter.strokeStyle(cq.color(color||'#000')).lineWidth(1);
+	for (var i=0.5; i< this.filter.height; i+=2){
+		this.filter.strokeLine(0, i, this.filter.width, i);
 	}
-	this.context.putImageData(im,0,0);
 }
-
-
-cq.Layer.prototype.scanlines= function(intensity){
-	if (intensity<=0) return;
-	var i;
-	var w= this.width;
-	//debug('#'+val+''+val+''+val);
-	this.a(intensity).strokeStyle('#000').lineWidth(1);
-	for (i=0.5; i< this.height; i+=2){
-		this.strokeLine(0, i, w, i);
+ScanlinesFilter.prototype= {
+	render: function(intensity){
+		var t= intensity===undefined? this.intensity: intensity;
+		if (t<=0) return;
+		this.layer.a(t).drawImage(this.filter.canvas, 0, 0).ra();
+//		this.layer.blend(this.filter, this.mode, t);
 	}
-	this.ra();
 }
 
