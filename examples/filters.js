@@ -20,7 +20,8 @@ app= playground(
 		this.loadImages('orionbg');
 		var t= TIME();
 		this.filters=[
-			new BloomFilter(this.layer,8),
+			new BloomFilter(this.layer, 2, 100),
+			new BlurFilter(this.layer,8),
 			new FastBlurFilter(this.layer,8),
 			new PixelateFilter(this.layer,8),
 			new VignetteFilter(this.layer, 0.3, '#f05'),

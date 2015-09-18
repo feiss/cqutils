@@ -6,6 +6,7 @@ app= playground(
 	smoothing: false,
 	width: 320,
 	height: 200,
+	scale: 2,
 	container: document.getElementById('content'),
 	
 	create: function(){
