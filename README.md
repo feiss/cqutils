@@ -1,4 +1,4 @@
-#cqutils
+# cqutils
 
 A set of additions to Playground/Canvasquery HTML5 libraries by @rezoner
 
@@ -48,8 +48,8 @@ parseBitmapfont() searches image for letters separated by lwidth pixels, trims h
 	...
 }
 */
-font= parseBitmapFont(image, letters, lwidth, bgcolor) 
-app.layer.print(font, 'hello world!', 0, 0);
+fontSettings= parseBitmapFont(image, letters, lwidth, bgcolor) 
+app.layer.print(fontSettings, 'hello world!', 0, 0);
 
 debug(...)  // preety prints arguments in screen
 ```
