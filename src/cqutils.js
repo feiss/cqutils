@@ -19,7 +19,7 @@ Timer.prototype={
 	reset: function(){
 		this.table= {};
 		this.time= 0;
-		thid.dt= 0;
+		this.dt= 0;
 	},
 	pause: function(p){
 		this.paused= p===undefined?true:p;
